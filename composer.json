@@ -1,0 +1,42 @@
+{
+  "name": "gongarce/lunar-product-faq",
+  "description": "Lunar Product Product FAQ Addon",
+  "keywords": [
+    "lunar",
+    "laravel",
+    "ecommerce",
+    "e-commerce",
+    "headless",
+    "store",
+    "shop",
+    "cart"
+  ],
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "GonGarce",
+      "homepage": "https://github.com/zalito12"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Gongarce\\ProductFaq\\": "src"
+    }
+  },
+  "extra": {
+    "lunar": {
+      "name": "Lunar Product Faq"
+    },
+    "laravel": {
+      "providers": [
+        "Gongarce\\ProductFaq\\ProductFaqServiceProvider"
+      ]
+    }
+  },
+  "minimum-stability": "dev",
+  "require": {
+    "php": "^8.2",
+    "lunarphp/lunar": "^1.0.0-beta"
+  }
+}

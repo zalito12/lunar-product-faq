@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->json('text');
             $table->json('answer');
-            $table->integer('position')->index();
+            $table->integer('position')->default(1)->index();
             $table->timestamps();
         });
     }

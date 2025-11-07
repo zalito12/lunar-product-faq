@@ -9,6 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table($this->prefix.'questions', function (Blueprint $table) {
+            $table->dropIndex(['position']);
             $table->dropColumn('position');
         });
     }

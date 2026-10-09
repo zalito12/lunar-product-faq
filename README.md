@@ -44,7 +44,7 @@ never published if the surrounding transaction rolls back.
 use Gongarce\ProductFaq\Events\ProductFaqChanged;
 
 Event::listen(function (ProductFaqChanged $event) {
-    $event->productIds; // list<int>: unique ids of every affected product (variants resolve to their product)
+    $event->productIds; // list<int>: unique ids of every affected product
     $event->reason;     // ProductFaqChangeReason
     $event->questionId; // ?int, may point to an already deleted question
 });
@@ -54,13 +54,12 @@ Event::listen(function (ProductFaqChanged $event) {
 |-------------------|------------------------------------------------------------------------|
 | `QuestionUpdated` | `text` or `answer` of a question changes                               |
 | `QuestionDeleted` | A question is deleted (ids are captured before the cascade)            |
-| `ProductAttached` | A question is attached to a product or variant (`attach`, `sync`...)   |
-| `ProductDetached` | A question is detached from a product or variant (`detach`, `sync`...) |
+| `ProductAttached` | A question is attached to a product (`attach`, `sync`...)              |
+| `ProductDetached` | A question is detached from a product (`detach`, `sync`...)            |
 | `PositionChanged` | The pivot `position` changes (e.g. reordering in the panel)            |
 
-Every relationship that writes the `questionable` table (`Question::products()`, `Question::variants()`,
-`Product::questions()` and `ProductVariant::questions()`) uses the `Gongarce\ProductFaq\Models\Questionable`
-pivot, so these events are dispatched both from the admin panel and from your own Eloquent code.
+Questions apply to base products only. Both sides of the relationship (`Question::products()` and
+`Product::questions()`) use the `Gongarce\ProductFaq\Models\Questionable` pivot, so these events are dispatched both from the admin panel and from your own Eloquent code.
 Mass updates or deletes through the query builder (e.g. `Question::query()->delete()`) bypass Eloquent
 events and therefore don't dispatch it.
 

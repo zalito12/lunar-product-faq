@@ -8,7 +8,6 @@ use Filament\Forms\Form;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Gongarce\ProductFaq\Filament\Resources\QuestionResource\RelationManagers\ProductsRelationManager;
-use Gongarce\ProductFaq\Filament\Resources\QuestionResource\RelationManagers\VariantsRelationManager;
 use Lunar\Admin\Support\Forms\Components\TranslatedText;
 use Lunar\Admin\Support\Resources\BaseResource;
 use Gongarce\ProductFaq\Filament\Resources\QuestionResource\Pages;
@@ -115,7 +114,6 @@ class QuestionResource extends BaseResource
     {
         return [
             ProductsRelationManager::class,
-            VariantsRelationManager::class,
         ];
     }
 

@@ -29,8 +29,5 @@ return [
                 ]
             ],
         ],
-        'variants' => [
-            'title_plural' => 'Variants',
-        ],
     ],
 ];

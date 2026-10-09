@@ -5,13 +5,12 @@ use Gongarce\ProductFaq\Events\ProductFaqChanged;
 use Gongarce\ProductFaq\Events\ProductFaqChangeReason as Reason;
 use Gongarce\ProductFaq\Filament\Resources\ProductResource\Pages\ManageProductQuestionsPage;
 use Gongarce\ProductFaq\Filament\Resources\QuestionResource\Pages\EditQuestion;
+use Gongarce\ProductFaq\Filament\Resources\QuestionResource;
 use Gongarce\ProductFaq\Filament\Resources\QuestionResource\Pages\ListQuestion;
 use Gongarce\ProductFaq\Filament\Resources\QuestionResource\RelationManagers\ProductsRelationManager;
-use Gongarce\ProductFaq\Filament\Resources\QuestionResource\RelationManagers\VariantsRelationManager;
 use Illuminate\Support\Facades\Event;
 use Livewire\Livewire;
 use Lunar\Models\Product;
-use Lunar\Models\ProductVariant;
 
 beforeEach(function () {
     Filament::setCurrentPanel(Filament::getPanel('lunar'));
@@ -156,6 +155,10 @@ describe('question resource', function () {
 });
 
 describe('products relation manager', function () {
+    it('is the only relation manager of the question resource', function () {
+        expect(QuestionResource::getRelations())->toBe([ProductsRelationManager::class]);
+    });
+
     it('attaches a product', function () {
         fakeFaqEvents();
 
@@ -191,21 +194,3 @@ describe('products relation manager', function () {
     });
 });
 
-describe('variants relation manager', function () {
-    it('attaches and detaches a variant notifying its product', function () {
-        $variant = ProductVariant::factory()->create(['product_id' => $this->product->id]);
-        fakeFaqEvents();
-
-        $component = Livewire::test(VariantsRelationManager::class, ['ownerRecord' => $this->question, 'pageClass' => EditQuestion::class])
-            ->callTableAction('attach', data: ['recordId' => $variant->id])
-            ->assertHasNoTableActionErrors();
-
-        expect($this->question->variants()->pluck('questionable_id')->all())->toBe([$variant->id]);
-
-        $component->callTableBulkAction('detach', [$variant])
-            ->assertHasNoTableActionErrors();
-
-        expect(faqEvents(Reason::ProductAttached)->sole()->productIds)->toBe([$this->product->id])
-            ->and(faqEvents(Reason::ProductDetached)->sole()->productIds)->toBe([$this->product->id]);
-    });
-});

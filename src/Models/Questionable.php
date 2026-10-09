@@ -4,15 +4,13 @@ namespace Gongarce\ProductFaq\Models;
 
 use Gongarce\ProductFaq\Events\ProductFaqChanged;
 use Gongarce\ProductFaq\Events\ProductFaqChangeReason;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphPivot;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
 use Lunar\Models\Product;
-use Lunar\Models\ProductVariant;
 
 /**
- * Pivot between questions and their questionable models (products, variants).
+ * Pivot between questions and the products they belong to.
  *
  * Every relationship able to write the questionable table uses this pivot, so
  * attach, detach, sync and pivot updates all end up dispatching ProductFaqChanged.
@@ -60,7 +58,6 @@ class Questionable extends MorphPivot
     public static function resolveProductIds(iterable $records): array
     {
         $productIds = [];
-        $variantIds = [];
 
         foreach ($records as $record) {
             $record = (array) $record;
@@ -68,21 +65,7 @@ class Questionable extends MorphPivot
 
             if (is_a($class, Product::class, true)) {
                 $productIds[] = $record['questionable_id'];
-            } elseif (is_a($class, ProductVariant::class, true)) {
-                $variantIds[] = $record['questionable_id'];
             }
-        }
-
-        if (! empty($variantIds)) {
-            $variantClass = ProductVariant::modelClass();
-
-            $productIds = [
-                ...$productIds,
-                ...$variantClass::withTrashed()
-                    ->whereIn((new $variantClass)->getKeyName(), array_unique($variantIds))
-                    ->pluck('product_id')
-                    ->all(),
-            ];
         }
 
         return ProductFaqChanged::normalizeIds($productIds);
@@ -110,20 +93,6 @@ class Questionable extends MorphPivot
             $reason,
             $questionId === null ? null : (int) $questionId,
         );
-    }
-
-    /**
-     * Remove every pivot row of a questionable model without dispatching events.
-     */
-    public static function deleteFor(Model $questionable): void
-    {
-        (new static)
-            ->setConnection($questionable->getConnectionName())
-            ->newQuery()
-            ->toBase()
-            ->where('questionable_type', $questionable->getMorphClass())
-            ->where('questionable_id', $questionable->getKey())
-            ->delete();
     }
 
     /**

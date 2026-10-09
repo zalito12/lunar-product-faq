@@ -9,7 +9,6 @@ use Gongarce\ProductFaq\Tests\Fixtures\CustomQuestion;
 use Illuminate\Support\Facades\Event;
 use Lunar\Facades\ModelManifest;
 use Lunar\Models\Product;
-use Lunar\Models\ProductVariant;
 
 beforeEach(function () {
     ModelManifest::replace(QuestionContract::class, CustomQuestion::class);
@@ -18,15 +17,12 @@ beforeEach(function () {
 it('resolves the replaced question model everywhere', function () {
     $question = createQuestion();
     $product = Product::factory()->create();
-    $variant = ProductVariant::factory()->create();
     $product->questions()->attach($question);
-    $variant->questions()->attach($question);
 
     expect(Question::modelClass())->toBe(CustomQuestion::class)
         ->and(QuestionResource::getModel())->toBe(CustomQuestion::class)
         ->and(Question::query()->first())->toBeInstanceOf(CustomQuestion::class)
-        ->and($product->questions()->first())->toBeInstanceOf(CustomQuestion::class)
-        ->and($variant->questions()->first())->toBeInstanceOf(CustomQuestion::class);
+        ->and($product->questions()->first())->toBeInstanceOf(CustomQuestion::class);
 });
 
 it('dispatches each event once for the replaced model', function () {

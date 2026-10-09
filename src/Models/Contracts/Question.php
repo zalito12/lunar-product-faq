@@ -12,9 +12,4 @@ interface Question
      * Return the question's products relationship.
      */
     public function products(): MorphToMany;
-
-    /**
-     * Return the question's products relationship.
-     */
-    public function variants(): MorphToMany;
 }

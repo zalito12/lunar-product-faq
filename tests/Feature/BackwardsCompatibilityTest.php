@@ -18,7 +18,6 @@ it('exposes the same public relationships', function () {
     $product = Product::factory()->create();
 
     expect($question->products())->toBeInstanceOf(MorphToMany::class)
-        ->and($question->variants())->toBeInstanceOf(MorphToMany::class)
         ->and($product->questions())->toBeInstanceOf(MorphToMany::class)
         ->and($product->questions()->getTable())->toBe('lunar_questionable')
         ->and($product->questions()->getPivotColumns())->toContain('position');

@@ -48,22 +48,6 @@ class ProductFaqServiceProvider extends ServiceProvider
                 ->withPivot('position');
         });
 
-        ProductVariant::resolveRelationUsing('questions', function (ProductVariant $variant) {
-            return $variant->morphToMany(Question::modelClass(), 'questionable', Questionable::tableName())
-                ->using(Questionable::class)
-                ->withPivot('position');
-        });
-
-        // The questionable_id column is polymorphic, so it can no longer cascade
-        // through a foreign key. Keep the old cascade behaviour on hard deletes.
-        Product::forceDeleted(function (Product $product) {
-            Questionable::deleteFor($product);
-        });
-
-        ProductVariant::forceDeleted(function (ProductVariant $variant) {
-            Questionable::deleteFor($variant);
-        });
-
         ModelManifest::addDirectory(
             __DIR__.'/Models'
         );

@@ -12,7 +12,6 @@ use Lunar\Base\BaseModel;
 use Lunar\Base\Traits\HasTranslations;
 use Lunar\Base\Traits\Searchable;
 use Lunar\Models\Product;
-use Lunar\Models\ProductVariant;
 
 /**
  * @property int $id
@@ -83,8 +82,7 @@ class Question extends BaseModel implements Contracts\Question
     }
 
     /**
-     * Return the ids of every product whose FAQ includes this question,
-     * either directly or through one of its variants.
+     * Return the ids of every product whose FAQ includes this question.
      *
      * @return list<int>
      */
@@ -113,15 +111,6 @@ class Question extends BaseModel implements Contracts\Question
     public function products(): MorphToMany
     {
         return $this->morphedByMany(Product::modelClass(), 'questionable', Questionable::tableName())
-            ->using(Questionable::class);
-    }
-
-    /**
-     * Return the purchasable relationship.
-     */
-    public function variants(): MorphToMany
-    {
-        return $this->morphedByMany(ProductVariant::modelClass(), 'questionable', Questionable::tableName())
             ->using(Questionable::class);
     }
 }

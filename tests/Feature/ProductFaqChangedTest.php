@@ -5,13 +5,11 @@ use Gongarce\ProductFaq\Events\ProductFaqChangeReason as Reason;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Lunar\Models\Product;
-use Lunar\Models\ProductVariant;
 
 beforeEach(function () {
     $this->question = createQuestion();
     $this->productA = Product::factory()->create();
     $this->productB = Product::factory()->create();
-    $this->variant = ProductVariant::factory()->create();
 });
 
 describe('question content', function () {
@@ -35,17 +33,6 @@ describe('question content', function () {
         $this->question->update(['answer' => ['en' => '<p>Three days.</p>']]);
 
         expect(faqProductIds(Reason::QuestionUpdated))->toBe([$this->productA->id]);
-    });
-
-    it('includes the owner products of associated variants', function () {
-        $this->question->products()->attach($this->productA);
-        $this->question->variants()->attach($this->variant);
-        fakeFaqEvents();
-
-        $this->question->update(['text' => ['en' => 'New text']]);
-
-        expect(faqProductIds(Reason::QuestionUpdated))
-            ->toBe(collect([$this->productA->id, $this->variant->product_id])->sort()->values()->all());
     });
 
     it('does not dispatch when nothing rendered has changed', function () {
@@ -91,16 +78,6 @@ describe('associations', function () {
         expect($event->reason)->toBe(Reason::ProductAttached)
             ->and($event->questionId)->toBe($this->question->id)
             ->and($event->productIds)->toBe([$this->productA->id]);
-    });
-
-    it('dispatches the owner product when attaching a variant', function () {
-        fakeFaqEvents();
-
-        $this->question->variants()->attach($this->variant);
-        $this->variant->questions()->detach($this->question);
-
-        expect(faqProductIds(Reason::ProductAttached))->toBe([$this->variant->product_id])
-            ->and(faqProductIds(Reason::ProductDetached))->toBe([$this->variant->product_id]);
     });
 
     it('dispatches ProductDetached from both sides', function () {
@@ -184,7 +161,6 @@ describe('position', function () {
 describe('deletion', function () {
     it('keeps every affected product id although the pivots are removed by cascade', function () {
         $this->question->products()->attach([$this->productA->id, $this->productB->id]);
-        $this->question->variants()->attach($this->variant);
         $questionId = $this->question->id;
         fakeFaqEvents();
 
@@ -195,7 +171,7 @@ describe('deletion', function () {
         expect($event->reason)->toBe(Reason::QuestionDeleted)
             ->and($event->questionId)->toBe($questionId)
             ->and($event->productIds)->toBe(
-                collect([$this->productA->id, $this->productB->id, $this->variant->product_id])->unique()->sort()->values()->all()
+                [$this->productA->id, $this->productB->id]
             );
     });
 
@@ -209,17 +185,6 @@ describe('deletion', function () {
 });
 
 describe('payload', function () {
-    it('delivers products reached directly and through a variant only once', function () {
-        $variant = ProductVariant::factory()->create(['product_id' => $this->productA->id]);
-        $this->question->products()->attach($this->productA);
-        $this->question->variants()->attach($variant);
-        fakeFaqEvents();
-
-        $this->question->update(['text' => ['en' => 'New text']]);
-
-        expect(faqEvents()->sole()->productIds)->toBe([$this->productA->id]);
-    });
-
     it('normalizes ids to unique integers without nulls', function () {
         $event = new ProductFaqChanged(['3', 1, null, 3, '', 2], Reason::ProductAttached);
 

@@ -37,7 +37,7 @@
   "minimum-stability": "dev",
   "require": {
     "php": "^8.2",
-    "lunarphp/lunar": "^1.1.0 <1.5"
+    "lunarphp/lunar": "~1.4.0"
   },
   "prefer-stable": true,
   "require-dev": {

@@ -7,7 +7,7 @@ TODO:
 
 # Requirements
 
-- LunarPHP Admin `>` `1.x`
+- LunarPHP `~1.4.0`
 
 # Installation
 

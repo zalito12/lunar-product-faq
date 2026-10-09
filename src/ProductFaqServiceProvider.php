@@ -7,6 +7,7 @@ use Gongarce\ProductFaq\Filament\Resources\ProductQuestionsExtension;
 use Gongarce\ProductFaq\Filament\Resources\ProductResource\MyProductResourceExtension;
 use Gongarce\ProductFaq\Filament\Resources\ProductResource\Pages\ManageProductQuestionsPage;
 use Gongarce\ProductFaq\Models\Question;
+use Gongarce\ProductFaq\Models\Questionable;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 use Lunar\Admin\Filament\Resources\ProductResource;
@@ -42,16 +43,26 @@ class ProductFaqServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'product-faq');
 
         Product::resolveRelationUsing('questions', function (Product $product) {
-            $prefix = config('lunar.database.table_prefix');
-            return $product->morphToMany(Question::class, 'questionable', "{$prefix}questionable")
+            return $product->morphToMany(Question::modelClass(), 'questionable', Questionable::tableName())
+                ->using(Questionable::class)
                 ->withPivot('position');
         });
 
-        /*ProductVariant::resolveRelationUsing('questions', function (ProductVariant $product) {
-            $prefix = config('lunar.database.table_prefix');
-            return $product->morphToMany(Question::class, 'questionable', "{$prefix}questionable")
+        ProductVariant::resolveRelationUsing('questions', function (ProductVariant $variant) {
+            return $variant->morphToMany(Question::modelClass(), 'questionable', Questionable::tableName())
+                ->using(Questionable::class)
                 ->withPivot('position');
-        });*/
+        });
+
+        // The questionable_id column is polymorphic, so it can no longer cascade
+        // through a foreign key. Keep the old cascade behaviour on hard deletes.
+        Product::forceDeleted(function (Product $product) {
+            Questionable::deleteFor($product);
+        });
+
+        ProductVariant::forceDeleted(function (ProductVariant $variant) {
+            Questionable::deleteFor($variant);
+        });
 
         ModelManifest::addDirectory(
             __DIR__.'/Models'

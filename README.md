@@ -3,8 +3,7 @@
 Allows to create translatable questions (with answers) and associate them to products.
 
 TODO:
-* Tests.
-* Associate to variants, collections, brands, etc.
+* Associate to collections, brands, etc.
 
 # Requirements
 
@@ -33,4 +32,40 @@ public function register(): void
     
     // ...
 }
+```
+
+# Events
+
+Whenever the FAQ rendered for one or more products may have changed, the plugin dispatches
+`Gongarce\ProductFaq\Events\ProductFaqChanged`. It implements `ShouldDispatchAfterCommit`, so it is
+never published if the surrounding transaction rolls back.
+
+```php
+use Gongarce\ProductFaq\Events\ProductFaqChanged;
+
+Event::listen(function (ProductFaqChanged $event) {
+    $event->productIds; // list<int>: unique ids of every affected product (variants resolve to their product)
+    $event->reason;     // ProductFaqChangeReason
+    $event->questionId; // ?int, may point to an already deleted question
+});
+```
+
+| Reason            | When                                                                   |
+|-------------------|------------------------------------------------------------------------|
+| `QuestionUpdated` | `text` or `answer` of a question changes                               |
+| `QuestionDeleted` | A question is deleted (ids are captured before the cascade)            |
+| `ProductAttached` | A question is attached to a product or variant (`attach`, `sync`...)   |
+| `ProductDetached` | A question is detached from a product or variant (`detach`, `sync`...) |
+| `PositionChanged` | The pivot `position` changes (e.g. reordering in the panel)            |
+
+Every relationship that writes the `questionable` table (`Question::products()`, `Question::variants()`,
+`Product::questions()` and `ProductVariant::questions()`) uses the `Gongarce\ProductFaq\Models\Questionable`
+pivot, so these events are dispatched both from the admin panel and from your own Eloquent code.
+Mass updates or deletes through the query builder (e.g. `Question::query()->delete()`) bypass Eloquent
+events and therefore don't dispatch it.
+
+# Testing
+
+```
+composer test
 ```

@@ -1,45 +1,51 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Test Case
-|--------------------------------------------------------------------------
-|
-| The closure you provide to your test functions is always bound to a specific PHPUnit test
-| case class. By default, that class is "PHPUnit\Framework\TestCase". Of course, you may
-| need to change it using the "uses()" function to bind a different classes or traits.
-|
-*/
+use Gongarce\ProductFaq\Events\ProductFaqChanged;
+use Gongarce\ProductFaq\Events\ProductFaqChangeReason;
+use Gongarce\ProductFaq\Models\Question;
+use Gongarce\ProductFaq\Tests\PrefixedTestCase;
+use Gongarce\ProductFaq\Tests\TestCase;
+use Illuminate\Support\Facades\Event;
 
-// uses(Tests\TestCase::class)->in('Feature');
+uses(TestCase::class)->in('Feature');
+uses(PrefixedTestCase::class)->in('Prefixed');
 
-/*
-|--------------------------------------------------------------------------
-| Expectations
-|--------------------------------------------------------------------------
-|
-| When you're writing tests, you often need to check that values meet certain conditions. The
-| "expect()" function gives you access to a set of "expectations" methods that you can use
-| to assert different things. Of course, you may extend the Expectation API at any time.
-|
-*/
-
-expect()->extend('toBeOne', function () {
-    return $this->toBe(1);
-});
-
-/*
-|--------------------------------------------------------------------------
-| Functions
-|--------------------------------------------------------------------------
-|
-| While Pest is very powerful out-of-the-box, you may have some testing code specific to your
-| project that you don't want to repeat in every file. Here you can also expose helpers as
-| global functions to help you to reduce the number of lines of code in your test files.
-|
-*/
-
-function something()
+function createQuestion(array $attributes = []): Question
 {
-    // ..
+    return Question::create([
+        'text' => ['en' => 'How long does shipping take?'],
+        'answer' => ['en' => '<p>Two days.</p>'],
+        ...$attributes,
+    ]);
+}
+
+/**
+ * Only fake the plugin event: Eloquent model events must keep running.
+ */
+function fakeFaqEvents(): void
+{
+    Event::fake([ProductFaqChanged::class]);
+}
+
+/**
+ * @return \Illuminate\Support\Collection<int, ProductFaqChanged>
+ */
+function faqEvents(?ProductFaqChangeReason $reason = null)
+{
+    return Event::dispatched(ProductFaqChanged::class)
+        ->map(fn (array $args) => $args[0])
+        ->filter(fn (ProductFaqChanged $event) => $reason === null || $event->reason === $reason)
+        ->values();
+}
+
+/**
+ * Union of the product ids of every dispatched event, optionally filtered by reason.
+ *
+ * @return list<int>
+ */
+function faqProductIds(?ProductFaqChangeReason $reason = null): array
+{
+    return ProductFaqChanged::normalizeIds(
+        faqEvents($reason)->flatMap(fn (ProductFaqChanged $event) => $event->productIds)
+    );
 }

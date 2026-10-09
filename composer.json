@@ -37,6 +37,26 @@
   "minimum-stability": "dev",
   "require": {
     "php": "^8.2",
-    "lunarphp/lunar": "^1.1.0"
+    "lunarphp/lunar": "~1.4.0"
+  },
+  "prefer-stable": true,
+  "require-dev": {
+    "orchestra/testbench": "^10.0",
+    "pestphp/pest": "^3.0",
+    "pestphp/pest-plugin-laravel": "^3.0",
+    "pestphp/pest-plugin-livewire": "^3.0"
+  },
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Gongarce\\ProductFaq\\Tests\\": "tests"
+    }
+  },
+  "scripts": {
+    "test": "pest"
   }
 }

@@ -3,6 +3,8 @@
 namespace Gongarce\ProductFaq\Models;
 
 use factories\QuestionFactory;
+use Gongarce\ProductFaq\Events\ProductFaqChanged;
+use Gongarce\ProductFaq\Events\ProductFaqChangeReason;
 use Illuminate\Database\Eloquent\Casts\AsCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
@@ -10,7 +12,6 @@ use Lunar\Base\BaseModel;
 use Lunar\Base\Traits\HasTranslations;
 use Lunar\Base\Traits\Searchable;
 use Lunar\Models\Product;
-use Lunar\Models\ProductVariant;
 
 /**
  * @property int $id
@@ -42,14 +43,58 @@ class Question extends BaseModel implements Contracts\Question
         'answer' => AsCollection::class,
     ];
 
+    /**
+     * Products affected by this question, captured before deletion because the
+     * pivot rows are removed by the database cascade. Not persisted.
+     *
+     * @var list<int>|null
+     */
+    protected ?array $productFaqDeletedProductIds = null;
+
     protected static function booted()
     {
-        /*static::deleting(function (self $shippingMethod) {
-            DB::beginTransaction();
-            $shippingMethod->customerGroups()->detach();
-            $shippingMethod->shippingRates()->delete();
-            DB::commit();
-        });*/
+        static::updated(function (self $question) {
+            if (! $question->wasChanged(['text', 'answer'])) {
+                return;
+            }
+
+            ProductFaqChanged::dispatch(
+                $question->affectedProductIds(),
+                ProductFaqChangeReason::QuestionUpdated,
+                $question->getKey(),
+            );
+        });
+
+        static::deleting(function (self $question) {
+            $question->productFaqDeletedProductIds = $question->affectedProductIds();
+        });
+
+        static::deleted(function (self $question) {
+            $productIds = $question->productFaqDeletedProductIds ?? [];
+            $question->productFaqDeletedProductIds = null;
+
+            ProductFaqChanged::dispatch(
+                $productIds,
+                ProductFaqChangeReason::QuestionDeleted,
+                $question->getKey(),
+            );
+        });
+    }
+
+    /**
+     * Return the ids of every product whose FAQ includes this question.
+     *
+     * @return list<int>
+     */
+    public function affectedProductIds(): array
+    {
+        if (! $this->getKey()) {
+            return [];
+        }
+
+        return Questionable::resolveProductIds(
+            Questionable::recordsForQuestion($this->getKey(), $this->getConnectionName())
+        );
     }
 
     /**
@@ -65,16 +110,7 @@ class Question extends BaseModel implements Contracts\Question
      */
     public function products(): MorphToMany
     {
-        $prefix = config('lunar.database.table_prefix');
-        return $this->morphedByMany(Product::class, 'questionable', "{$prefix}questionable");
-    }
-
-    /**
-     * Return the purchasable relationship.
-     */
-    public function variants(): MorphToMany
-    {
-        $prefix = config('lunar.database.table_prefix');
-        return $this->morphedByMany(ProductVariant::class, 'questionable', "{$prefix}questionable");
+        return $this->morphedByMany(Product::modelClass(), 'questionable', Questionable::tableName())
+            ->using(Questionable::class);
     }
 }

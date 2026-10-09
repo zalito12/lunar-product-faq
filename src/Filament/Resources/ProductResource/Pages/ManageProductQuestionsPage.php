@@ -8,7 +8,7 @@ use Filament\Support\Facades\FilamentIcon;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Gongarce\ProductFaq\Filament\Resources\QuestionResource;
-use Gongarce\ProductFaq\Models\Question;
+use Gongarce\ProductFaq\Models\Contracts\Question;
 use Lunar\Admin\Events\ProductCollectionsUpdated;
 use Lunar\Admin\Filament\Resources\ProductResource;
 use Lunar\Admin\Support\Pages\BaseManageRelatedRecords;

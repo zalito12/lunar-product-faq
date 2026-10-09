@@ -7,6 +7,7 @@ use Gongarce\ProductFaq\Filament\Resources\ProductQuestionsExtension;
 use Gongarce\ProductFaq\Filament\Resources\ProductResource\MyProductResourceExtension;
 use Gongarce\ProductFaq\Filament\Resources\ProductResource\Pages\ManageProductQuestionsPage;
 use Gongarce\ProductFaq\Models\Question;
+use Gongarce\ProductFaq\Models\Questionable;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 use Lunar\Admin\Filament\Resources\ProductResource;
@@ -42,16 +43,10 @@ class ProductFaqServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'product-faq');
 
         Product::resolveRelationUsing('questions', function (Product $product) {
-            $prefix = config('lunar.database.table_prefix');
-            return $product->morphToMany(Question::class, 'questionable', "{$prefix}questionable")
+            return $product->morphToMany(Question::modelClass(), 'questionable', Questionable::tableName())
+                ->using(Questionable::class)
                 ->withPivot('position');
         });
-
-        /*ProductVariant::resolveRelationUsing('questions', function (ProductVariant $product) {
-            $prefix = config('lunar.database.table_prefix');
-            return $product->morphToMany(Question::class, 'questionable', "{$prefix}questionable")
-                ->withPivot('position');
-        });*/
 
         ModelManifest::addDirectory(
             __DIR__.'/Models'
